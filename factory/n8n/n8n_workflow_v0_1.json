@@ -1,0 +1,254 @@
+{
+  "name": "Product Factory v0.1",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "n8n-v01-manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// Setup Test Data\n// ============================================\n// 環境変数から設定を読み込み、後続ノードに渡す。\n// FACTORY_ROOT が未設定の場合は fallback パスを使用。\n// 本番では Sheets Trigger → Format Row に差し替える。\n\nconst factoryRoot = process.env.FACTORY_ROOT || 'C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os';\nconst pythonBin = process.env.PYTHON_BIN || 'python';\nconst inputFile = factoryRoot + '/factory/forms/sheets_row_example.json';\nconst slug = 'n8n_test_clinic';\n\nreturn [{\n  json: {\n    factoryRoot,\n    pythonBin,\n    inputFile,\n    slug,\n    normalizedJson: factoryRoot + '/factory/forms/form_response_from_sheet.json',\n    profileYaml: 'factory/input/' + slug + '.yaml',\n    outputDir: 'output/generated/' + slug\n  }\n}];"
+      },
+      "id": "n8n-v01-setup",
+      "name": "Setup Test Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && set PYTHONIOENCODING=utf-8 && ' + $json.pythonBin + ' factory/scripts/normalize_sheet_row.py --input \"' + $json.inputFile + '\" --output factory/forms/form_response_from_sheet.json' }}"
+      },
+      "id": "n8n-v01-normalize",
+      "name": "[3] Normalize Sheet Row",
+      "type": "n8n-nodes-base.execute",
+      "typeVersion": 1,
+      "position": [640, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 前のノードの結果を取得し、Setup Test Data のデータと合わせて次に渡す\nconst setup = $('Setup Test Data').first().json;\nconst prev = $input.first().json;\n\nreturn [{\n  json: {\n    ...setup,\n    normalizeExitCode: prev.exitCode || 0,\n    normalizeStdout: prev.stdout || '',\n    normalizeStderr: prev.stderr || ''\n  }\n}];"
+      },
+      "id": "n8n-v01-pass-context-1",
+      "name": "Pass Context 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && set PYTHONIOENCODING=utf-8 && ' + $json.pythonBin + ' factory/scripts/create_clinic_profile.py --from-form factory/forms/form_response_from_sheet.json --output ' + $json.profileYaml }}"
+      },
+      "id": "n8n-v01-create-profile",
+      "name": "[4] Create Profile",
+      "type": "n8n-nodes-base.execute",
+      "typeVersion": 1,
+      "position": [1080, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const setup = $('Setup Test Data').first().json;\nconst prev = $input.first().json;\n\nreturn [{\n  json: {\n    ...setup,\n    profileExitCode: prev.exitCode || 0,\n    profileStdout: prev.stdout || '',\n    profileStderr: prev.stderr || ''\n  }\n}];"
+      },
+      "id": "n8n-v01-pass-context-2",
+      "name": "Pass Context 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && set PYTHONIOENCODING=utf-8 && ' + $json.pythonBin + ' factory/scripts/generate_pack.py --profile ' + $json.profileYaml + ' --output ' + $json.outputDir + ' --llm faq review recruiting' }}"
+      },
+      "id": "n8n-v01-generate-pack",
+      "name": "[5] Generate Pack",
+      "type": "n8n-nodes-base.execute",
+      "typeVersion": 1,
+      "position": [1520, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const setup = $('Setup Test Data').first().json;\nconst prev = $input.first().json;\n\nreturn [{\n  json: {\n    ...setup,\n    packExitCode: prev.exitCode || 0,\n    packStdout: prev.stdout || '',\n    packStderr: prev.stderr || ''\n  }\n}];"
+      },
+      "id": "n8n-v01-pass-context-3",
+      "name": "Pass Context 3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && set PYTHONIOENCODING=utf-8 && ' + $json.pythonBin + ' factory/scripts/validate_pack.py --pack ' + $json.outputDir }}"
+      },
+      "id": "n8n-v01-validate",
+      "name": "[6] Validate Pack",
+      "type": "n8n-nodes-base.execute",
+      "typeVersion": 1,
+      "position": [1960, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "validate-pass",
+              "leftValue": "={{ $json.exitCode }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "n8n-v01-if-result",
+      "name": "[7] PASS or FAIL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2180, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "pass-status",
+              "name": "status",
+              "value": "PASS",
+              "type": "string"
+            },
+            {
+              "id": "pass-message",
+              "name": "message",
+              "value": "={{ 'パック生成成功（' + $('Setup Test Data').first().json.slug + '）\\n' + $json.stdout }}",
+              "type": "string"
+            },
+            {
+              "id": "pass-output-dir",
+              "name": "outputDir",
+              "value": "={{ $('Setup Test Data').first().json.outputDir }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "n8n-v01-result-pass",
+      "name": "[8] Result: PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2400, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fail-status",
+              "name": "status",
+              "value": "FAIL",
+              "type": "string"
+            },
+            {
+              "id": "fail-message",
+              "name": "message",
+              "value": "={{ 'パック生成に問題あり（' + $('Setup Test Data').first().json.slug + '）\\n' + ($json.stderr || $json.stdout || 'エラー詳細なし') }}",
+              "type": "string"
+            },
+            {
+              "id": "fail-output-dir",
+              "name": "outputDir",
+              "value": "={{ $('Setup Test Data').first().json.outputDir }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "n8n-v01-result-fail",
+      "name": "[9] Result: FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2400, 400]
+    },
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute", "value": 5 }] },
+        "documentId": "<<GOOGLE_SHEET_ID>>",
+        "sheetName": "Sheet1",
+        "event": "rowAdded"
+      },
+      "id": "n8n-v01-future-sheets",
+      "name": "[Future] Sheets Trigger",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [200, 520],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "channel": "<<SLACK_CHANNEL>>",
+        "text": "={{ $json.status + ': ' + $json.message }}"
+      },
+      "id": "n8n-v01-future-slack",
+      "name": "[Future] Slack Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [2620, 300],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Setup Test Data", "type": "main", "index": 0 }]]
+    },
+    "Setup Test Data": {
+      "main": [[{ "node": "[3] Normalize Sheet Row", "type": "main", "index": 0 }]]
+    },
+    "[3] Normalize Sheet Row": {
+      "main": [[{ "node": "Pass Context 1", "type": "main", "index": 0 }]]
+    },
+    "Pass Context 1": {
+      "main": [[{ "node": "[4] Create Profile", "type": "main", "index": 0 }]]
+    },
+    "[4] Create Profile": {
+      "main": [[{ "node": "Pass Context 2", "type": "main", "index": 0 }]]
+    },
+    "Pass Context 2": {
+      "main": [[{ "node": "[5] Generate Pack", "type": "main", "index": 0 }]]
+    },
+    "[5] Generate Pack": {
+      "main": [[{ "node": "Pass Context 3", "type": "main", "index": 0 }]]
+    },
+    "Pass Context 3": {
+      "main": [[{ "node": "[6] Validate Pack", "type": "main", "index": 0 }]]
+    },
+    "[6] Validate Pack": {
+      "main": [[{ "node": "[7] PASS or FAIL?", "type": "main", "index": 0 }]]
+    },
+    "[7] PASS or FAIL?": {
+      "main": [
+        [{ "node": "[8] Result: PASS", "type": "main", "index": 0 }],
+        [{ "node": "[9] Result: FAIL", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "product-factory-v01"
+  },
+  "pinData": {},
+  "tags": [
+    { "name": "product-factory" },
+    { "name": "v0.1" },
+    { "name": "manual-test" }
+  ]
+}

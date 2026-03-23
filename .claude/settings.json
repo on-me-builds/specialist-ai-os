@@ -1,0 +1,62 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python factory/scripts/generate_pack.py*)",
+      "Bash(python factory/scripts/validate_pack.py*)",
+      "Bash(pip install pyyaml)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(mkdir -p *)",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(*secret*)",
+      "Bash(*password*)",
+      "Bash(*token*)",
+      "Bash(*api_key*)",
+      "Bash(git push*)",
+      "Bash(curl*)",
+      "Bash(wget*)",
+      "Bash(pip install *:!pyyaml)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os/.claude/hooks/pre_bash_check.py\" \"$TOOL_INPUT\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os/.claude/hooks/post_write_check.py\" \"$TOOL_INPUT\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os/.claude/hooks/on_stop_summary.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

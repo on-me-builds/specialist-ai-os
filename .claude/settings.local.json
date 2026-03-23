@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(discord:configure)",
+      "Read(//c/Users/tkym1/.claude/channels/discord/**)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''mcpServers'''',{}\\), indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(find ~/.claude/plugins/cache/claude-plugins-official/discord -name *.json)",
+      "Skill(update-config)"
+    ]
+  }
+}

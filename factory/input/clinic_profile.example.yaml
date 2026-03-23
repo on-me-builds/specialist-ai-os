@@ -1,0 +1,45 @@
+# ============================================
+# クリニックプロフィール（Template Factory 入力ファイル）
+# ============================================
+# このファイルを医院ごとに書き換えて generate_templates.py を実行してください。
+
+clinic_name: "さくら歯科クリニック"
+
+target_type: "一般歯科〜自費を少し扱う歯科医院"
+
+services:
+  - 一般歯科（虫歯・歯周病）
+  - 予防歯科・メンテナンス
+  - 小児歯科
+  - ホワイトニング
+  - セラミック治療
+
+features:
+  - 担当衛生士制で予防管理
+  - キッズスペースあり
+  - 土曜診療対応
+  - CT・マイクロスコープ完備
+
+booking_rules:
+  system: "電話 + Web予約"
+  cancel_policy: "前日までに連絡"
+  first_visit_note: "初回は30分〜1時間程度"
+
+payment_notes:
+  insurance: true
+  self_pay_options:
+    - クレジットカード
+    - デンタルローン
+  price_note: "自費治療は事前にお見積もりをお出しします"
+
+hiring_targets:
+  - position: "歯科衛生士"
+    experience: "経験者・ブランクOK"
+    highlight: "担当患者制でやりがいあり"
+  - position: "歯科助手・受付"
+    experience: "未経験OK"
+    highlight: "研修制度あり、午前のみ相談可"
+
+tone: "やわらかく丁寧・患者目線"
+
+notes: "院長は予防重視。地域密着型で小児も多い。"

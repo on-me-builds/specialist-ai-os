@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-03-22T22:23:45.256974",
+  "generator": "Product Factory v0.4",
+  "clinic_name": "やまだ歯科医院",
+  "files": [
+    "faq.md",
+    "review_reply.md",
+    "recruiting.md",
+    "sales_onepager.md"
+  ],
+  "generation_modes": {
+    "faq.md": "template",
+    "review_reply.md": "template",
+    "recruiting.md": "template",
+    "sales_onepager.md": "template"
+  },
+  "profile_fields": [
+    "clinic_name",
+    "target_type",
+    "services",
+    "features",
+    "booking_rules",
+    "payment_notes",
+    "hiring_targets",
+    "tone",
+    "notes"
+  ]
+}

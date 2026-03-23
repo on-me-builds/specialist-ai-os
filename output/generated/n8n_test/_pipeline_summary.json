@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-22T23:15:41.308432",
+  "slug": "n8n_test",
+  "status": "PASS",
+  "steps": [
+    {
+      "step": 1,
+      "label": "Normalize Sheet Row",
+      "status": "OK",
+      "exitCode": 0
+    },
+    {
+      "step": 2,
+      "label": "Create Profile",
+      "status": "OK",
+      "exitCode": 0
+    },
+    {
+      "step": 3,
+      "label": "Generate Pack",
+      "status": "OK",
+      "exitCode": 0
+    },
+    {
+      "step": 4,
+      "label": "Validate Pack",
+      "status": "OK",
+      "exitCode": 0
+    }
+  ]
+}

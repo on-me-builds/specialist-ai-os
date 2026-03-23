@@ -1,0 +1,193 @@
+{
+  "name": "Product Factory Pipeline v0.1 (Manual Test)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-0-manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// === テスト用: 既存サンプルJSONのパスとスラグを設定 ===\n// 本番では Sheets Trigger → Format Row に差し替える\n\nconst factoryRoot = process.env.FACTORY_ROOT || '/path/to/specialist-ai-os';\nconst sampleJson = factoryRoot + '/factory/forms/sheets_row_example.json';\n\nreturn [{\n  json: {\n    inputPath: sampleJson,\n    slug: 'n8n_test_clinic',\n    clinicName: 'n8nテスト医院',\n    factoryRoot: factoryRoot\n  }\n}];"
+      },
+      "id": "node-1-setup-test",
+      "name": "Setup Test Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && python factory/scripts/normalize_sheet_row.py --input \"' + $json.inputPath + '\" --output factory/forms/form_response_from_sheet.json' }}"
+      },
+      "id": "node-3-normalize",
+      "name": "Normalize Sheet Row",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $('Setup Test Data').first().json.factoryRoot + '\" && python factory/scripts/create_clinic_profile.py --from-form factory/forms/form_response_from_sheet.json --output factory/input/' + $('Setup Test Data').first().json.slug + '.yaml' }}"
+      },
+      "id": "node-4-create-profile",
+      "name": "Create Profile",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $('Setup Test Data').first().json.factoryRoot + '\" && python factory/scripts/generate_pack.py --profile factory/input/' + $('Setup Test Data').first().json.slug + '.yaml --output output/generated/' + $('Setup Test Data').first().json.slug + ' --llm faq review recruiting' }}"
+      },
+      "id": "node-5-generate-pack",
+      "name": "Generate Pack",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1130, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $('Setup Test Data').first().json.factoryRoot + '\" && python factory/scripts/validate_pack.py --pack output/generated/' + $('Setup Test Data').first().json.slug }}"
+      },
+      "id": "node-6-validate",
+      "name": "Validate Pack",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1350, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "check-pass",
+              "leftValue": "={{ $json.exitCode }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-7-check-result",
+      "name": "Check Result",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1570, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "result-pass",
+              "name": "result",
+              "value": "={{ 'PASS: ' + $('Setup Test Data').first().json.clinicName + ' のパック生成に成功しました' }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "node-8a-result-pass",
+      "name": "Result: PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1790, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "result-fail",
+              "name": "result",
+              "value": "={{ 'FAIL: ' + $('Setup Test Data').first().json.clinicName + ' のパック生成で問題が発生' }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "node-8b-result-fail",
+      "name": "Result: FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1790, 400]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [{ "mode": "everyMinute", "value": 5 }]
+        },
+        "documentId": "<<GOOGLE_SHEET_ID>>",
+        "sheetName": "Sheet1",
+        "event": "rowAdded"
+      },
+      "id": "node-future-sheets-trigger",
+      "name": "[Future] Sheets Trigger",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [250, 500],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "channel": "<<SLACK_CHANNEL>>",
+        "text": "={{ $json.result }}"
+      },
+      "id": "node-future-slack",
+      "name": "[Future] Slack Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [2010, 300],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Setup Test Data", "type": "main", "index": 0 }]]
+    },
+    "Setup Test Data": {
+      "main": [[{ "node": "Normalize Sheet Row", "type": "main", "index": 0 }]]
+    },
+    "Normalize Sheet Row": {
+      "main": [[{ "node": "Create Profile", "type": "main", "index": 0 }]]
+    },
+    "Create Profile": {
+      "main": [[{ "node": "Generate Pack", "type": "main", "index": 0 }]]
+    },
+    "Generate Pack": {
+      "main": [[{ "node": "Validate Pack", "type": "main", "index": 0 }]]
+    },
+    "Validate Pack": {
+      "main": [[{ "node": "Check Result", "type": "main", "index": 0 }]]
+    },
+    "Check Result": {
+      "main": [
+        [{ "node": "Result: PASS", "type": "main", "index": 0 }],
+        [{ "node": "Result: FAIL", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {},
+  "tags": [
+    { "name": "product-factory" },
+    { "name": "manual-test" }
+  ]
+}

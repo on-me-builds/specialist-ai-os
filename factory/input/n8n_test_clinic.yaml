@@ -1,0 +1,40 @@
+# ============================================
+# クリニックプロフィール（自動生成）
+# 生成日時: 2026-03-22 18:35
+# Clinic Profile Builder v0.1 で作成
+# ============================================
+
+clinic_name: やまだ歯科医院
+target_type: 一般歯科〜自費を少し扱う歯科医院
+services:
+- 一般歯科（虫歯・歯周病）
+- 予防歯科・メンテナンス
+- 小児歯科
+- インプラント
+features:
+- 担当衛生士制
+- 土曜診療対応
+- 駐車場あり
+- 個室診療
+booking_rules:
+  system: 電話 + LINE予約
+  cancel_policy: 前日までに連絡
+  first_visit_note: 初回は30分〜1時間程度
+payment_notes:
+  insurance: true
+  self_pay_options:
+  - クレジットカード
+  - デンタルローン
+  price_note: 自費治療は事前にお見積もりをお出しします
+hiring_targets:
+- position: 歯科衛生士
+  experience: 経験者歓迎・ブランクOK
+  highlight: 予防メインでやりがいあり
+- position: 歯科助手・受付
+  experience: 未経験OK
+  highlight: 研修充実
+- position: 勤務医
+  experience: 自費経験を積みたい方歓迎
+  highlight: ''
+tone: やわらかく丁寧・患者目線
+notes: 院長は予防重視。駐車場10台完備。地域のファミリー層がメイン。

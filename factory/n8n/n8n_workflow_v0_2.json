@@ -1,0 +1,238 @@
+{
+  "name": "Product Factory v0.2 (Sheets Trigger)",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute", "value": 5 }] },
+        "documentId": { "mode": "id", "value": "<<GOOGLE_SHEET_ID>>" },
+        "sheetName": { "mode": "name", "value": "フォームの回答 1" },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "id": "v02-sheets-trigger",
+      "name": "Sheets Trigger",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 4.1,
+      "position": [200, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "<<CREDENTIAL_ID>>", "name": "Google Sheets OAuth" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// Format Row: Sheets Trigger の行データを\n// normalize_sheet_row.py が読めるJSONファイルに書き出す\n// ============================================\n\nconst fs = require('fs');\nconst path = require('path');\n\nconst factoryRoot = process.env.FACTORY_ROOT || 'C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os';\nconst pythonBin = process.env.PYTHON_BIN || 'python';\n\n// Sheets Trigger が渡す行データ（列名がキー）\nconst row = $input.first().json;\n\n// clinic_name からスラグを生成\nconst clinicName = row['医院名'] || row['Q1_医院名'] || row['clinic_name'] || 'unknown';\nconst timestamp = Date.now();\nconst slug = clinicName\n  .replace(/[\\s\\u3000]+/g, '_')\n  .replace(/[^a-zA-Z0-9\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FFF_]/g, '')\n  .substring(0, 30)\n  || 'clinic_' + timestamp;\n\n// 行データをJSONファイルとして一時保存\nconst rowJsonPath = path.join(factoryRoot, 'factory', 'forms', `row_${slug}_${timestamp}.json`);\nfs.writeFileSync(rowJsonPath, JSON.stringify(row, null, 2), 'utf-8');\n\nreturn [{\n  json: {\n    factoryRoot,\n    pythonBin,\n    inputFile: rowJsonPath,\n    slug,\n    clinicName,\n    normalizedJson: path.join(factoryRoot, 'factory', 'forms', `response_${slug}.json`),\n    profileYaml: `factory/input/${slug}.yaml`,\n    outputDir: `output/generated/${slug}`\n  }\n}];"
+      },
+      "id": "v02-format-row",
+      "name": "Format Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && set PYTHONIOENCODING=utf-8 && ' + $json.pythonBin + ' factory/scripts/normalize_sheet_row.py --input \"' + $json.inputFile + '\" --output \"' + $json.normalizedJson + '\"' }}"
+      },
+      "id": "v02-normalize",
+      "name": "[3] Normalize Sheet Row",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [640, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const setup = $('Format Row').first().json;\nconst prev = $input.first().json;\nreturn [{ json: { ...setup, normalizeExitCode: prev.exitCode || 0, normalizeStdout: prev.stdout || '' } }];"
+      },
+      "id": "v02-ctx1",
+      "name": "Pass Context 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && set PYTHONIOENCODING=utf-8 && ' + $json.pythonBin + ' factory/scripts/create_clinic_profile.py --from-form \"' + $json.normalizedJson + '\" --output ' + $json.profileYaml }}"
+      },
+      "id": "v02-create-profile",
+      "name": "[4] Create Profile",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1080, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const setup = $('Format Row').first().json;\nconst prev = $input.first().json;\nreturn [{ json: { ...setup, profileExitCode: prev.exitCode || 0, profileStdout: prev.stdout || '' } }];"
+      },
+      "id": "v02-ctx2",
+      "name": "Pass Context 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && set PYTHONIOENCODING=utf-8 && ' + $json.pythonBin + ' factory/scripts/generate_pack.py --profile ' + $json.profileYaml + ' --output ' + $json.outputDir + ' --llm faq review recruiting' }}"
+      },
+      "id": "v02-generate-pack",
+      "name": "[5] Generate Pack",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1520, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const setup = $('Format Row').first().json;\nconst prev = $input.first().json;\nreturn [{ json: { ...setup, packExitCode: prev.exitCode || 0, packStdout: prev.stdout || '' } }];"
+      },
+      "id": "v02-ctx3",
+      "name": "Pass Context 3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $json.factoryRoot + '\" && set PYTHONIOENCODING=utf-8 && ' + $json.pythonBin + ' factory/scripts/validate_pack.py --pack ' + $json.outputDir }}"
+      },
+      "id": "v02-validate",
+      "name": "[6] Validate Pack",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1960, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "validate-pass",
+              "leftValue": "={{ $json.exitCode }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "v02-if",
+      "name": "[7] PASS or FAIL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2180, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "s", "name": "status", "value": "PASS", "type": "string" },
+            { "id": "m", "name": "message", "value": "={{ '✅ ' + $('Format Row').first().json.clinicName + ' のパック生成に成功\\n出力: ' + $('Format Row').first().json.outputDir }}", "type": "string" },
+            { "id": "d", "name": "outputDir", "value": "={{ $('Format Row').first().json.outputDir }}", "type": "string" }
+          ]
+        }
+      },
+      "id": "v02-pass",
+      "name": "[8] Result: PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2400, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "s", "name": "status", "value": "FAIL", "type": "string" },
+            { "id": "m", "name": "message", "value": "={{ '❌ ' + $('Format Row').first().json.clinicName + ' のパック生成で問題発生\\n' + ($json.stderr || $json.stdout || '詳細なし') }}", "type": "string" },
+            { "id": "d", "name": "outputDir", "value": "={{ $('Format Row').first().json.outputDir }}", "type": "string" }
+          ]
+        }
+      },
+      "id": "v02-fail",
+      "name": "[9] Result: FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2400, 400]
+    },
+    {
+      "parameters": {},
+      "id": "v02-manual-trigger",
+      "name": "[Test] Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 520]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// テスト用: 既存サンプルJSONを使って Manual Trigger 経由で実行\n// ============================================\nconst factoryRoot = process.env.FACTORY_ROOT || 'C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os';\nconst pythonBin = process.env.PYTHON_BIN || 'python';\nconst slug = 'manual_test';\n\nreturn [{\n  json: {\n    factoryRoot,\n    pythonBin,\n    inputFile: factoryRoot + '/factory/forms/sheets_row_example.json',\n    slug,\n    clinicName: 'テスト医院（Manual）',\n    normalizedJson: factoryRoot + '/factory/forms/response_manual_test.json',\n    profileYaml: 'factory/input/' + slug + '.yaml',\n    outputDir: 'output/generated/' + slug\n  }\n}];"
+      },
+      "id": "v02-manual-setup",
+      "name": "[Test] Setup Test Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 520]
+    },
+    {
+      "parameters": {
+        "channel": "<<SLACK_CHANNEL>>",
+        "text": "={{ $json.message }}"
+      },
+      "id": "v02-future-slack",
+      "name": "[Future] Slack Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [2620, 300],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Sheets Trigger": {
+      "main": [[{ "node": "Format Row", "type": "main", "index": 0 }]]
+    },
+    "Format Row": {
+      "main": [[{ "node": "[3] Normalize Sheet Row", "type": "main", "index": 0 }]]
+    },
+    "[3] Normalize Sheet Row": {
+      "main": [[{ "node": "Pass Context 1", "type": "main", "index": 0 }]]
+    },
+    "Pass Context 1": {
+      "main": [[{ "node": "[4] Create Profile", "type": "main", "index": 0 }]]
+    },
+    "[4] Create Profile": {
+      "main": [[{ "node": "Pass Context 2", "type": "main", "index": 0 }]]
+    },
+    "Pass Context 2": {
+      "main": [[{ "node": "[5] Generate Pack", "type": "main", "index": 0 }]]
+    },
+    "[5] Generate Pack": {
+      "main": [[{ "node": "Pass Context 3", "type": "main", "index": 0 }]]
+    },
+    "Pass Context 3": {
+      "main": [[{ "node": "[6] Validate Pack", "type": "main", "index": 0 }]]
+    },
+    "[6] Validate Pack": {
+      "main": [[{ "node": "[7] PASS or FAIL?", "type": "main", "index": 0 }]]
+    },
+    "[7] PASS or FAIL?": {
+      "main": [
+        [{ "node": "[8] Result: PASS", "type": "main", "index": 0 }],
+        [{ "node": "[9] Result: FAIL", "type": "main", "index": 0 }]
+      ]
+    },
+    "[Test] Manual Trigger": {
+      "main": [[{ "node": "[Test] Setup Test Data", "type": "main", "index": 0 }]]
+    },
+    "[Test] Setup Test Data": {
+      "main": [[{ "node": "[3] Normalize Sheet Row", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false, "instanceId": "product-factory-v02" },
+  "pinData": {},
+  "tags": [
+    { "name": "product-factory" },
+    { "name": "v0.2" },
+    { "name": "sheets-trigger" }
+  ]
+}

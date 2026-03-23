@@ -1,0 +1,10 @@
+start:C:\Users\tkym1\OneDrive\ドキュメント\Obsidian Vault\specialist-ai-os\docs\presentations\specialist_ai_os_internal_deck_v0_1.md
+parsed:13
+mkdir:C:\Users\tkym1\OneDrive\ドキュメント\Obsidian Vault\specialist-ai-os\docs\presentations\build\specialist_ai_os_internal_deck_v0_1
+wrote:content_types
+done:C:\Users\tkym1\OneDrive\ドキュメント\Obsidian Vault\specialist-ai-os\docs\presentations\build\specialist_ai_os_internal_deck_v0_1
+start:C:\Users\tkym1\OneDrive\ドキュメント\Obsidian Vault\specialist-ai-os\docs\presentations\specialist_ai_os_external_deck_v0_1.md
+parsed:10
+mkdir:C:\Users\tkym1\OneDrive\ドキュメント\Obsidian Vault\specialist-ai-os\docs\presentations\build\specialist_ai_os_external_deck_v0_1
+wrote:content_types
+done:C:\Users\tkym1\OneDrive\ドキュメント\Obsidian Vault\specialist-ai-os\docs\presentations\build\specialist_ai_os_external_deck_v0_1

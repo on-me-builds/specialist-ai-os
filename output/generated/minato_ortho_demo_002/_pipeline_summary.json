@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-23T00:30:35.214026",
+  "slug": "minato_ortho_demo_002",
+  "status": "PASS",
+  "steps": [
+    {
+      "step": 1,
+      "label": "Normalize Sheet Row",
+      "status": "OK",
+      "exitCode": 0
+    },
+    {
+      "step": 2,
+      "label": "Create Profile",
+      "status": "OK",
+      "exitCode": 0
+    },
+    {
+      "step": 3,
+      "label": "Generate Pack",
+      "status": "OK",
+      "exitCode": 0
+    },
+    {
+      "step": 4,
+      "label": "Validate Pack",
+      "status": "OK",
+      "exitCode": 0
+    }
+  ]
+}
