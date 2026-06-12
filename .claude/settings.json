@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os/.claude/hooks/pre_bash_check.py\" \"$TOOL_INPUT\""
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre_bash_check.py\" \"$TOOL_INPUT\""
           }
         ]
       }
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os/.claude/hooks/post_write_check.py\" \"$TOOL_INPUT\""
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_write_check.py\" \"$TOOL_INPUT\""
           }
         ]
       }
