@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "draft_dir": "output/marketing/teardown-001",
+  "checks": [
+    {
+      "name": "all_draft_files_present",
+      "status": "PASS",
+      "details": "all 6 draft files present"
+    },
+    {
+      "name": "draft_only_human_review_boundary",
+      "status": "PASS",
+      "details": "required phrase \"Draft only. Human review is required\" present in all drafts"
+    },
+    {
+      "name": "not_a_product_launch",
+      "status": "PASS",
+      "details": "required phrase \"not a product launch\" present in all drafts"
+    },
+    {
+      "name": "not_a_safety_guarantee",
+      "status": "PASS",
+      "details": "required phrase \"not a safety guarantee\" present in all drafts"
+    },
+    {
+      "name": "not_a_security_claim",
+      "status": "PASS",
+      "details": "required phrase \"not a security claim\" present in all drafts"
+    },
+    {
+      "name": "devto_published_false",
+      "status": "PASS",
+      "details": "required phrase \"published: false\" present in devto.md"
+    },
+    {
+      "name": "dm_outreach_human_recipient_approval",
+      "status": "PASS",
+      "details": "required phrase \"Use only after a human selects the recipient\" present in dm_outreach.md"
+    },
+    {
+      "name": "no_auto_publish_or_auto_send_claims",
+      "status": "PASS",
+      "details": "no auto-publish / auto-send / automated submission wording found"
+    },
+    {
+      "name": "no_unqualified_safe_to_trust",
+      "status": "PASS",
+      "details": "no unqualified \"safe to trust\" claims found"
+    }
+  ],
+  "human_approval_required": true,
+  "external_action_taken": false
+}
