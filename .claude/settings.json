@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:/Users/tkym1/OneDrive/ドキュメント/Obsidian Vault/specialist-ai-os/.claude/hooks/on_stop_summary.py\""
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/on_stop_summary.py\""
           }
         ]
       }
